@@ -22,6 +22,11 @@ m_down:
 sqlc:
 	sqlc generate
 
+start:
+	CompileDaemon -command="./Fin-Remittance"
+
+
+
 
 
 

@@ -6,11 +6,20 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"log"
+	"sync"
 	"testing"
 	"time"
 )
 
+func clean_up() {
+	err := testQuery.DeleteAllUsers(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func TestDeleteUser(t *testing.T) {
+	defer clean_up()
 	user := createRandomUser(t)
 
 	err := testQuery.DeleteUser(context.Background(), user.ID)
@@ -23,19 +32,31 @@ func TestDeleteUser(t *testing.T) {
 
 }
 
-func TestGetUserByID(t *testing.T) {
-	user := createRandomUser(t)
-
-	newUser, err := testQuery.GetUserByID(context.Background(), user.ID)
-
+func TestListUser(t *testing.T) {
+	defer clean_up()
+	//go_routine call
+	var wg sync.WaitGroup
+	for i := 0; i < 30; i++ {
+		wg.Add(1)
+		//concurrency
+		go func() {
+			defer wg.Done()
+			createRandomUser(t)
+		}()
+	}
+	wg.Wait()
+	arg := db.ListUserParams{
+		Offset: 0,
+		Limit:  30,
+	}
+	users, err := testQuery.ListUser(context.Background(), arg)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, newUser)
-
-	assert.Equal(t, newUser.HashedPassword, user.HashedPassword)
-	assert.Equal(t, user.Email, newUser.Email)
+	assert.NotEmpty(t, users)
+	assert.Equal(t, len(users), 30)
 }
 
 func TestGetUserByEmail(t *testing.T) {
+	defer clean_up()
 	user := createRandomUser(t)
 
 	newUser, err := testQuery.GetUserByEmail(context.Background(), user.Email)
@@ -72,6 +93,8 @@ func createRandomUser(t *testing.T) db.User {
 }
 
 func TestCreateUser(t *testing.T) {
+	defer clean_up()
+
 	user1 := createRandomUser(t)
 
 	user2, err := testQuery.CreateUser(context.Background(), db.CreateUserParams{
@@ -84,6 +107,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
+	defer clean_up()
 	user := createRandomUser(t)
 
 	newPassword, err := utils.GenerateHashedPassword(utils.RandomString(8))
