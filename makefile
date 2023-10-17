@@ -43,6 +43,9 @@ test:
 	@echo "Running tests..."
 	go test -v -cover ./...
 
+# package for JWT token
+jwt:
+	go get github.com/golang-jwt/jwt
 # Start Development Server
 start:
 	@echo "Starting the development server..."

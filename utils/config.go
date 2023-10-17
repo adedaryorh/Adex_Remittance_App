@@ -8,9 +8,11 @@ type Config struct {
 	DBdriver       string `mapstructure:"DB_DRIVER"`
 	DB_source      string `mapstructure:"DB_SOURCE"`
 	DB_source_live string `mapstructure:"DB_SOURCE_LIVE"`
+	Signing_key    string `mapstructure:"SIGNING_KEY"`
 }
 
 func LoadConfig(path string) (config *Config, err error) {
+	//pls check out
 	viper.AddConfigPath(path)
 	viper.SetConfigName("env")
 	viper.SetConfigType("env")

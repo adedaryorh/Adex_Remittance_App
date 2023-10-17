@@ -20,19 +20,21 @@ func (u User) router(server *Server) {
 
 	serverGroup := server.router.Group("/users")
 	serverGroup.GET("", u.listUsers)
-	serverGroup.POST("", u.createUser)
+	serverGroup.GET("", u.listUsers)
+	serverGroup.POST("me", u.getLoggedInUser)
 }
 
 type UserParams struct {
-	Email    string `json:"email"binding:"required,email"`
-	Password string `json:"password"binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required"`
 }
 
 func (u *User) createUser(c *gin.Context) {
 	//creating a user instance
 	user := new(UserParams)
 	//or var user UserParams
-
+	// binding json payload
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -46,6 +48,7 @@ func (u *User) createUser(c *gin.Context) {
 	arg := db.CreateUserParams{
 		Email:          user.Email,
 		HashedPassword: hashedPassword,
+		Username:       user.Username,
 	}
 
 	newUser, err := u.server.queries.CreateUser(context.Background(), arg)
@@ -60,7 +63,6 @@ func (u *User) createUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, UserResponse{}.toUserResponse(&newUser))
-
 }
 
 func (u *User) listUsers(c *gin.Context) {
@@ -74,6 +76,18 @@ func (u *User) listUsers(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, users)
+}
+
+func (u User) getLoggedInUser(c *gin.Context) {
+	userId, exist := c.Get("user_id")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Not authorized to access resources"})
+	}
+
+	converted, ok := userId.(int64)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Encountered an issue"})
+	}
 }
 
 type UserResponse struct {

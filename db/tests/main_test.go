@@ -13,7 +13,6 @@ import (
 var testQuery *db.Queries
 
 func TestMain(m *testing.M) {
-
 	config, err := utils.LoadConfig("../..")
 	if err != nil {
 		log.Fatal("Cant load env config", err)

@@ -9,6 +9,7 @@ services:
       - POSTGRES_PASSWORD=secret
     ports:
       - '5432:5432'
+
   postgres-live:
     container_name: finTech_postgres_live
     image: postgres:15-alpine
