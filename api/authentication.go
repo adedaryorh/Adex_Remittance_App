@@ -1,10 +1,12 @@
 package api
 
 import (
+	db "Fin-Remittance/db/sqlc"
 	"Fin-Remittance/utils"
 	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"net/http"
 )
 
@@ -17,6 +19,48 @@ func (a Authentication) router(server *Server) {
 
 	serverGroup := server.router.Group("/authentication")
 	serverGroup.POST("login", a.login)
+	serverGroup.POST("register", a.register)
+}
+
+type UserParams struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required"`
+}
+
+func (a *Authentication) register(c *gin.Context) {
+	//creating a user instance
+	user := new(UserParams)
+	//or var user UserParams
+	// binding json payload
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	hashedPassword, err := utils.GenerateHashedPassword(user.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	arg := db.CreateUserParams{
+		Email:          user.Email,
+		HashedPassword: hashedPassword,
+		Username:       user.Username,
+	}
+
+	newUser, err := a.server.queries.CreateUser(context.Background(), arg)
+	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code == "23505" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "user already exists"})
+				return
+			}
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, UserResponse{}.toUserResponse(&newUser))
 }
 
 func (a Authentication) login(c *gin.Context) {
@@ -40,7 +84,7 @@ func (a Authentication) login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Incorrect email or pass"})
 		return
 	}
-	token, err := utils.CreateToken(dbUser.ID, a.server.config.Signing_key)
+	token, err := tokenController.CreateToken(dbUser.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

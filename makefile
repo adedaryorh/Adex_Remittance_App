@@ -25,12 +25,12 @@ db_down:
 # Migration Up and Down Commands
 m_up:
 	@echo "Applying database migrations (up)..."
-	migrate -path db/migrations -database "postgres://root:secret@localhost:5432/finTech_postgres_db?sslmode=disable" up
+	#migrate -path db/migrations -database "postgres://root:secret@localhost:5432/finTech_postgres_db?sslmode=disable" up
 	migrate -path db/migrations -database "postgres://root:secret@localhost:5433/finTech_postgres_db_live?sslmode=disable" up
 
 m_down:
 	@echo "Reverting database migrations (down)..."
-	migrate -path db/migrations -database "postgres://root:secret@localhost:5432/finTech_postgres_db?sslmode=disable" down
+	#migrate -path db/migrations -database "postgres://root:secret@localhost:5432/finTech_postgres_db?sslmode=disable" down
 	migrate -path db/migrations -database "postgres://root:secret@localhost:5433/finTech_postgres_db_live?sslmode=disable" down
 
 # SQLC Commands
