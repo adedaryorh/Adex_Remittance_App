@@ -12,7 +12,7 @@ type User struct {
 	ID             int64     `json:"id"`
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"hashed_password"`
-	Username       string    `json:"username"`
+	Username       string    `json:"username" validate:"required, min=2,max=100"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
